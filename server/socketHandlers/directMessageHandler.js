@@ -1,5 +1,6 @@
 const conversation = require("../models/conversation");
 const message = require("../models/message");
+const chatUpdate = require("./updates/chat");
 
 const directMessageHandler = async (socket, data) => {
   console.log("direct message event is being handle");
