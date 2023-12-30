@@ -1,38 +1,43 @@
-//check this
-
 const Conversation = require("../../models/conversation");
 const serverStore = require("../../serverStore");
 
-const updateChatHistory = async (conversationId, toSpecifiedSocketId) => {
+const updateChatHistory = async (
+  conversationId,
+  toSpecifiedSocketId = null
+) => {
   const conversation = await Conversation.findById(conversationId).populate({
-    path: "message",
-    model: "message",
+    path: "messages",
+    model: "Message",
     populate: {
       path: "author",
       model: "User",
-      select: "username_Id",
+      select: "username _id",
     },
   });
+
   if (conversation) {
     const io = serverStore.getSocketServerInstance();
 
     if (toSpecifiedSocketId) {
+      // initial update of chat history
       return io.to(toSpecifiedSocketId).emit("direct-chat-history", {
         messages: conversation.messages,
-        participates: conversation.participates,
+        participants: conversation.participants,
       });
-      //initail update of chat history
     }
-    // check if user of this conversation are onle and emit if yes to the update of message
 
-    conversation.participates.forEach((userId) => {
+    // check if users of this conversation are online
+    // if yes emit to them update of messages
+
+    conversation.participants.forEach((userId) => {
       const activeConnections = serverStore.getActiveConnections(
         userId.toString()
       );
+
       activeConnections.forEach((socketId) => {
         io.to(socketId).emit("direct-chat-history", {
           messages: conversation.messages,
-          participates: conversation.participates,
+          participants: conversation.participants,
         });
       });
     });
